@@ -176,9 +176,22 @@
 
         // --- 3. 圣诞树逻辑 ---
         const themes = {
-            classic: { leaf: 0x0f5c0f, light1: 0xff0000, light2: 0xffd700, ribbon: 0xffd700, bg: '#1a1a2e' },
-            frozen:  { leaf: 0x88ccff, light1: 0xffffff, light2: 0x00ffff, ribbon: 0xffffff, bg: '#091a2b' },
-            cyber:   { leaf: 0xff00ff, light1: 0x00ffcc, light2: 0xffff00, ribbon: 0x00ffff, bg: '#000000' }
+          classic: {
+            leaf: 0x0f5c0f, light1: 0xff0000, light2: 0xffd700, ribbon: 0xffd700, bg: '#1a1a2e',
+            wishText: "#ffdd00",
+            wishGlow: "rgba(255, 215, 0, 1)"
+          },
+          frozen: {
+            leaf: 0x88ccff, light1: 0xffffff, light2: 0x00ffff, ribbon: 0xffffff, bg: '#091a2b',
+            // 冰雪奇缘：浅蓝字 + 浅紫发光
+            wishText: "#bfefff",
+            wishGlow: "rgba(205, 170, 255, 1)"
+          },
+          cyber: {
+            leaf: 0xff00ff, light1: 0x00ffcc, light2: 0xffff00, ribbon: 0x00ffff, bg: '#000000',
+            wishText: "#00ffcc",
+            wishGlow: "rgba(0, 255, 204, 1)"
+          }
         };
         let currentTheme = themes.classic;
 
@@ -299,26 +312,46 @@
             scene.add(snowSystem);
         }
 
-        // --- 6. 许愿文字 ---
+        // --- 6. 许愿文字（颜色跟随主题） ---
         function createTextSprite(text) {
-            const canvas = document.createElement('canvas');
-            canvas.width = 512;
-            canvas.height = 128; // 加宽画布防止文字截断
-            const ctx = canvas.getContext('2d');
-            ctx.shadowColor = "rgba(126,231,255,1)";
-            ctx.fillRect(0,0,512,128);
-            ctx.font = "Bold 50px Arial";
-            ctx.fillStyle = "#7ee7ff";
-            ctx.textAlign = "center";
-            ctx.shadowColor = "rgba(255,255,0,1)";
-            ctx.shadowBlur = 10;
-            ctx.fillText(text, 256, 80);
-            
-            const tex = new THREE.CanvasTexture(canvas);
-            const mat = new THREE.SpriteMaterial({ map: tex, transparent: true });
-            const sprite = new THREE.Sprite(mat);
-            sprite.scale.set(8, 2, 1);
-            return sprite;
+          const canvas = document.createElement('canvas');
+          canvas.width = 512;
+          canvas.height = 128;
+        
+          const ctx = canvas.getContext('2d');
+        
+          // 清透明背景（避免残留/黑底）
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+          // 字体
+          ctx.font = "Bold 50px Arial";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+        
+          // 从主题读取颜色（兜底：如果没配就用默认）
+          const textColor = (currentTheme && currentTheme.wishText) ? currentTheme.wishText : "#ffdd00";
+          const glowColor = (currentTheme && currentTheme.wishGlow) ? currentTheme.wishGlow : "rgba(255, 215, 0, 1)";
+        
+          // 让字更清晰一点：先描边再填充
+          ctx.lineWidth = 6;
+          ctx.strokeStyle = "rgba(0, 0, 0, 0.45)";
+          ctx.strokeText(text, 256, 64);
+        
+          // 发光
+          ctx.shadowColor = glowColor;
+          ctx.shadowBlur = 12;
+        
+          // 填充文字
+          ctx.fillStyle = textColor;
+          ctx.fillText(text, 256, 64);
+        
+          const tex = new THREE.CanvasTexture(canvas);
+          tex.needsUpdate = true;
+        
+          const mat = new THREE.SpriteMaterial({ map: tex, transparent: true });
+          const sprite = new THREE.Sprite(mat);
+          sprite.scale.set(8, 2, 1);
+          return sprite;
         }
 
         // 初始化
@@ -452,4 +485,5 @@
 </body>
 
 </html>
+
 
